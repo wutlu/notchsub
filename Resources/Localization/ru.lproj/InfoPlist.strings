@@ -1,0 +1,2 @@
+"NSAudioCaptureUsageDescription" = "NotchSub слушает звук, который воспроизводит Mac, чтобы превращать его в субтитры и перевод в реальном времени. Микрофон не используется.";
+"CFBundleDisplayName" = "NotchSub";

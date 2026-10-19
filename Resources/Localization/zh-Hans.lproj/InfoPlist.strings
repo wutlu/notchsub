@@ -1,0 +1,2 @@
+"NSAudioCaptureUsageDescription" = "NotchSub 会收听 Mac 播放的声音，将其转换为实时字幕和翻译。从不使用麦克风。";
+"CFBundleDisplayName" = "NotchSub";

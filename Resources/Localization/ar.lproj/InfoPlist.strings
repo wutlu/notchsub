@@ -1,0 +1,2 @@
+"NSAudioCaptureUsageDescription" = "يستمع NotchSub إلى الصوت الذي يشغّله جهاز Mac لتحويله إلى ترجمة نصية وترجمة فورية. لا يُستخدم الميكروفون أبدًا.";
+"CFBundleDisplayName" = "NotchSub";

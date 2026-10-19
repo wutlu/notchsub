@@ -1,0 +1,2 @@
+"NSAudioCaptureUsageDescription" = "NotchSubはMacで再生される音声を聞き取り、ライブ字幕と翻訳に変換します。マイクは使用しません。";
+"CFBundleDisplayName" = "NotchSub";

@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NotchSub — Live subtitles from your Mac's notch</title>
+<meta name="description" content="Free, open-source macOS app that turns any audio your Mac plays into live subtitles and translations — right from the notch. On-device, private, 99 languages.">
+<meta property="og:title" content="NotchSub — Live subtitles from your Mac's notch">
+<meta property="og:description" content="Free & open-source. On-device speech recognition and translation for any audio on your Mac.">
+<meta property="og:image" content="assets/icon.png">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<style>
+  :root {
+    --bg: #fbfbfd;
+    --bg-alt: #f2f2f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --line: rgba(0, 0, 0, 0.08);
+    --accent: #5b4cf5;
+    --accent-2: #7c5cff;
+    --btn-text: #ffffff;
+    --code-bg: #1d1d1f;
+    --code-text: #f5f5f7;
+    --shadow: 0 20px 60px rgba(40, 30, 120, 0.12);
+    --hero-glow: rgba(124, 92, 255, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #000000;
+      --bg-alt: #0d0d12;
+      --card: #16161c;
+      --text: #f5f5f7;
+      --muted: #a1a1a6;
+      --line: rgba(255, 255, 255, 0.1);
+      --accent: #8b7dff;
+      --accent-2: #a78bfa;
+      --code-bg: #16161c;
+      --code-text: #f5f5f7;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      --hero-glow: rgba(124, 92, 255, 0.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #000000; --bg-alt: #0d0d12; --card: #16161c; --text: #f5f5f7; --muted: #a1a1a6;
+    --line: rgba(255, 255, 255, 0.1); --accent: #8b7dff; --accent-2: #a78bfa;
+    --code-bg: #16161c; --code-text: #f5f5f7; --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --hero-glow: rgba(124, 92, 255, 0.28);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 16px; height: 52px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text); font-size: 17px; }
+  .brand img { width: 26px; height: 26px; }
+  .brand:hover { text-decoration: none; }
+  nav .links { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 14px; }
+  nav .links a { color: var(--muted); }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  .lang-toggle {
+    border: 1px solid var(--line); background: transparent; color: var(--muted);
+    border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer;
+  }
+  @media (max-width: 640px) { nav .links a.hide-sm { display: none; } }
+
+  /* Hero */
+  .hero { position: relative; text-align: center; padding: 72px 0 40px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -120px 0 auto; height: 600px; z-index: -1;
+    background: radial-gradient(ellipse 60% 50% at 50% 30%, var(--hero-glow), transparent 70%);
+  }
+  .app-icon { width: 128px; height: 128px; filter: drop-shadow(0 18px 30px rgba(60, 40, 180, 0.35)); }
+  h1 {
+    font-size: clamp(40px, 7vw, 72px); line-height: 1.04; letter-spacing: -0.035em;
+    margin: 20px 0 16px; font-weight: 700;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, #5eead4, #60a5fa 45%, #c084fc);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead { font-size: clamp(18px, 2.4vw, 22px); color: var(--muted); max-width: 640px; margin: 0 auto; }
+  .cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 999px;
+    font-size: 17px; font-weight: 500; transition: transform .15s ease, box-shadow .15s ease, background .15s;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary {
+    background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: var(--btn-text);
+    box-shadow: 0 8px 24px rgba(91, 76, 245, 0.35);
+  }
+  .btn-secondary { color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  .btn svg { width: 18px; height: 18px; }
+  .meta { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+  /* MacBook mock */
+  .mac {
+    position: relative; margin: 56px auto 0; max-width: 920px; aspect-ratio: 16 / 9.4;
+    border-radius: 22px 22px 8px 8px; padding: 14px 14px 0;
+    background: linear-gradient(180deg, #2b2b30, #18181b); box-shadow: var(--shadow);
+  }
+  .screen {
+    position: relative; height: 100%; border-radius: 10px 10px 0 0; overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 70% at 20% 100%, #f472b6 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 85% 90%, #60a5fa 0%, transparent 60%),
+      linear-gradient(160deg, #7c5cff 0%, #4f46e5 45%, #1e1b4b 100%);
+  }
+  .menubar {
+    position: absolute; inset: 0 0 auto; height: 26px; display: flex; align-items: center;
+    padding: 0 14px; gap: 16px; font-size: 12.5px; color: rgba(255,255,255,.92);
+    background: rgba(20, 16, 50, 0.28); backdrop-filter: blur(20px);
+  }
+  .menubar b { font-weight: 600; }
+  .menubar .right { margin-left: auto; display: flex; gap: 14px; opacity: .9; }
+  @media (max-width: 640px) { .menubar .hide-sm { display: none; } }
+  .video {
+    position: absolute; left: 8%; right: 8%; top: 32%; bottom: 7%; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(0,0,0,.55), rgba(0,0,0,.35)); border: 1px solid rgba(255,255,255,.12);
+    display: grid; place-items: center; color: rgba(255,255,255,.75);
+  }
+  .video .play {
+    width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.18);
+    display: grid; place-items: center; backdrop-filter: blur(10px);
+  }
+  .video .play::after {
+    content: ""; margin-left: 5px; border-left: 20px solid #fff; border-top: 12px solid transparent; border-bottom: 12px solid transparent;
+  }
+  .video .bar { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); overflow: hidden; }
+  .video .bar i { display: block; height: 100%; width: 40%; background: #fff; animation: progress 24s linear infinite; }
+  @keyframes progress { from { width: 8%; } to { width: 92%; } }
+
+  .notch-panel {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: min(62%, 560px); padding: 34px 26px 18px; color: #fff;
+    background: #050507; border-radius: 0 0 26px 26px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.45); text-align: center;
+  }
+  .notch-panel::before, .notch-panel::after {
+    content: ""; position: absolute; top: 0; width: 14px; height: 14px;
+  }
+  .notch-panel::before { left: -14px; background: radial-gradient(circle at 0 100%, transparent 14px, #050507 14.5px); }
+  .notch-panel::after { right: -14px; background: radial-gradient(circle at 100% 100%, transparent 14px, #050507 14.5px); }
+  .np-head { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,.7); margin-bottom: 12px; }
+  .np-head .dot { width: 7px; height: 7px; border-radius: 50%; background: #ff3b5c; box-shadow: 0 0 8px #ff3b5c; }
+  .np-head .pair { margin-left: auto; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,.1); font-weight: 600; }
+  .waves { display: inline-flex; gap: 2px; align-items: center; }
+  .waves i { width: 3px; border-radius: 2px; background: rgba(255,255,255,.8); animation: wave 1s ease-in-out infinite; }
+  .waves i:nth-child(1) { height: 5px; animation-delay: -.2s; }
+  .waves i:nth-child(2) { height: 9px; animation-delay: -.5s; }
+  .waves i:nth-child(3) { height: 12px; animation-delay: -.1s; }
+  .waves i:nth-child(4) { height: 8px; animation-delay: -.7s; }
+  @keyframes wave { 0%, 100% { transform: scaleY(.5); } 50% { transform: scaleY(1.1); } }
+  .np-trans { font-size: clamp(13px, 2vw, 18px); font-weight: 600; min-height: 1.4em; transition: opacity .3s; }
+  .np-orig { font-size: clamp(11px, 1.5vw, 14px); color: rgba(255,255,255,.5); margin-top: 3px; min-height: 1.4em; transition: opacity .3s; }
+  .np-old { opacity: .45; margin-bottom: 10px; }
+  .fade { opacity: .35; }
+  @media (max-width: 640px) {
+    .notch-panel { width: 82%; padding: 28px 14px 14px; }
+    .np-old { display: none; }
+  }
+  .mac-base {
+    max-width: 1000px; height: 16px; margin: 0 auto; border-radius: 0 0 14px 14px;
+    background: linear-gradient(180deg, #c9c9ce, #8e8e93); position: relative;
+  }
+  .mac-base::after { content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 14%; height: 6px; border-radius: 0 0 8px 8px; background: rgba(0,0,0,.18); }
+
+  /* Sections */
+  section { padding: 88px 0; }
+  section.alt { background: var(--bg-alt); }
+  h2 { font-size: clamp(30px, 4.6vw, 48px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 14px; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-size: 19px; max-width: 620px; margin: 0 auto 48px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 26px; }
+  .card .ico {
+    width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 16px;
+    background: linear-gradient(135deg, #7c5cff, #4f46e5); color: #fff;
+  }
+  .card .ico svg { width: 22px; height: 22px; }
+  .card h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -0.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .step { position: relative; padding: 26px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--text); color: var(--bg); font-weight: 700; font-size: 15px; margin-bottom: 14px;
+  }
+  .step h3 { margin: 0 0 6px; font-size: 18px; }
+  .step p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .install { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .install .card h3 { display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  .code {
+    position: relative; margin-top: 14px; background: var(--code-bg); color: var(--code-text);
+    border-radius: 12px; padding: 14px 54px 14px 16px; font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+    overflow-x: auto; white-space: nowrap; border: 1px solid var(--line);
+  }
+  .copy {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    border: 0; border-radius: 8px; padding: 6px 9px; background: rgba(255,255,255,.12); color: #fff; cursor: pointer; font-size: 12px;
+  }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .note code, .faq code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; background: var(--bg-alt); padding: 1px 5px; border-radius: 5px; }
+  .card ol { margin: 12px 0 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+  .card ol li { margin: 4px 0; }
+
+  .faq { max-width: 760px; margin: 0 auto; }
+  details { border-bottom: 1px solid var(--line); padding: 18px 4px; }
+  summary { cursor: pointer; font-size: 18px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--muted); font-size: 22px; line-height: 1; transition: transform .2s; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { color: var(--muted); margin: 10px 0 0; font-size: 16px; }
+
+  .final { text-align: center; }
+  .final .app-icon { width: 96px; height: 96px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/icon.png" alt="">NotchSub</a>
+    <div class="links">
+      <a class="hide-sm" href="#features" data-i18n="nav.features">Features</a>
+      <a class="hide-sm" href="#install" data-i18n="nav.install">Install</a>
+      <a class="hide-sm" href="#faq">FAQ</a>
+      <a href="https://github.com/wutlu/notchsub">GitHub</a>
+      <button class="lang-toggle" id="langToggle" aria-label="Change language">TR</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="app-icon" src="assets/icon.png" alt="NotchSub app icon">
+    <h1><span data-i18n="hero.t1">Live subtitles,</span><br><span class="grad" data-i18n="hero.t2">right from your notch.</span></h1>
+    <p class="lead" data-i18n="hero.lead">NotchSub turns any audio your Mac plays — videos, calls, podcasts, streams — into live subtitles and translations. Free, open source, and completely on-device.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/wutlu/notchsub/releases/latest/download/NotchSub.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+        <span data-i18n="hero.download">Download for Mac</span>
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/wutlu/notchsub">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+        <span data-i18n="hero.source">View source</span>
+      </a>
+    </div>
+    <p class="meta" data-i18n="hero.meta">Free · macOS 15 Sequoia or later · Apple Silicon (M1 and newer)</p>
+
+    <div class="mac" aria-hidden="true">
+      <div class="screen">
+        <div class="menubar">
+          <b></b><b>Safari</b><span class="hide-sm">File</span><span class="hide-sm">Edit</span>
+          <span class="right"><span>⌁</span><span>Wi‑Fi</span><span id="clock">9:41</span></span>
+        </div>
+        <div class="video"><div class="play"></div><div class="bar"><i></i></div></div>
+        <div class="notch-panel">
+          <div class="np-head">
+            <span class="dot"></span><span data-i18n="mock.live">Live</span>
+            <span class="waves"><i></i><i></i><i></i><i></i></span>
+            <span class="pair" id="pair">EN → TR</span>
+          </div>
+          <div class="np-old">
+            <div class="np-trans" id="oldTrans"></div>
+            <div class="np-orig" id="oldOrig"></div>
+          </div>
+          <div class="np-trans" id="trans"></div>
+          <div class="np-orig" id="orig"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mac-base" aria-hidden="true"></div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2 data-i18n="feat.title">Understand everything you hear.</h2>
+    <p class="sub" data-i18n="feat.sub">Click the notch, and NotchSub starts listening to your Mac's audio, never your microphone.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h3 data-i18n="feat.private.t">Private by design</h3>
+        <p data-i18n="feat.private.d">Speech recognition and translation run entirely on your Mac. No account, no cloud, no audio ever leaves your computer.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
+        <h3 data-i18n="feat.lang.t">99 spoken languages</h3>
+        <p data-i18n="feat.lang.d">Powered by OpenAI Whisper. Translate into 20 languages with Apple's on-device translation, or detect the spoken language automatically.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></div>
+        <h3 data-i18n="feat.fast.t">Real-time</h3>
+        <p data-i18n="feat.fast.d">Words appear about a second after they're spoken, accelerated by the Apple Neural Engine.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+        <h3 data-i18n="feat.oss.t">Free &amp; open source</h3>
+        <p data-i18n="feat.oss.d">MIT licensed, native Swift. No subscriptions or ads, and nothing is tracked. Read the code, fork it, improve it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2 data-i18n="how.title">How it works</h2>
+    <p class="sub" data-i18n="how.sub">Three steps, about a minute to set up.</p>
+    <div class="steps">
+      <div class="step"><h3 data-i18n="how.1.t">Click the notch</h3><p data-i18n="how.1.d">A panel drops down from the top of your screen and starts listening to system audio.</p></div>
+      <div class="step"><h3 data-i18n="how.2.t">Play anything</h3><p data-i18n="how.2.d">A YouTube video, a Zoom call, a lecture or a podcast. If your Mac plays it, NotchSub can subtitle it.</p></div>
+      <div class="step"><h3 data-i18n="how.3.t">Read along</h3><p data-i18n="how.3.d">The translation appears in large text with the original line below it. Click the notch again to close the panel.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2 data-i18n="inst.title">Install NotchSub</h2>
+    <p class="sub" data-i18n="inst.sub">Pick whichever you prefer. Both install the same app.</p>
+    <div class="install">
+      <div class="card">
+        <h3><span data-i18n="inst.term.t">One-line install</span> <span class="badge" data-i18n="inst.rec">Recommended</span></h3>
+        <p data-i18n="inst.term.d">Open Terminal and paste this command. It downloads the latest version into Applications and opens it.</p>
+        <div class="code"><span id="cmd">curl -fsSL https://wutlu.github.io/notchsub/install.sh | bash</span><button class="copy" id="copyBtn" data-i18n="inst.copy">Copy</button></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="inst.dmg.t">Download the .dmg</h3>
+        <ol>
+          <li data-i18n="inst.dmg.1">Open <b>NotchSub.dmg</b> and drag the app into Applications.</li>
+          <li data-i18n="inst.dmg.2">On first launch, macOS may say it can't verify the developer. Open System Settings → Privacy &amp; Security, then click “Open Anyway”.</li>
+          <li data-i18n="inst.dmg.3">Allow “System Audio Recording” when NotchSub asks.</li>
+        </ol>
+        <p style="margin-top:16px"><a class="btn btn-primary" style="font-size:15px;padding:10px 18px" href="https://github.com/wutlu/notchsub/releases/latest/download/NotchSub.dmg" data-i18n="inst.dmg.btn">Download .dmg</a></p>
+      </div>
+    </div>
+    <p class="note" data-i18n="inst.note">On first launch NotchSub downloads the Whisper speech model (~630 MB) and optimizes it for your Mac's Neural Engine, which can take several minutes. Later launches take a few seconds.</p>
+  </div>
+</section>
+
+<section id="faq" class="alt">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary data-i18n="faq.1.q">Does it use my microphone?</summary><p data-i18n="faq.1.a">No. NotchSub uses Core Audio's system audio tap and only hears what your Mac plays. Your own voice is never captured.</p></details>
+      <details><summary data-i18n="faq.2.q">Is anything sent to the internet?</summary><p data-i18n="faq.2.a">Only two one-time downloads: the speech model from Hugging Face, and Apple's language packs. Transcription and translation happen offline after that.</p></details>
+      <details><summary data-i18n="faq.3.q">Which Macs are supported?</summary><p data-i18n="faq.3.a">Any Apple Silicon Mac (M1 or newer) running macOS 15 Sequoia or later. Notch-less Macs and external displays get a small virtual notch at the top of the screen.</p></details>
+      <details><summary data-i18n="faq.4.q">Why does macOS warn about an unidentified developer?</summary><p data-i18n="faq.4.a">NotchSub is a free community project and isn't notarized with a paid Apple Developer ID yet. The one-line installer avoids the warning, or you can approve the app once in System Settings → Privacy &amp; Security.</p></details>
+      <details><summary data-i18n="faq.5.q">Which languages can it translate into?</summary><p data-i18n="faq.5.a">Speech can be recognized in 99 languages. Translation uses Apple's on-device engine, which covers about 20 major languages. The app's own interface follows your Mac's system language.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <img class="app-icon" src="assets/icon.png" alt="">
+    <h2 style="margin-top:18px" data-i18n="final.title">Never miss a word again.</h2>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/wutlu/notchsub/releases/latest/download/NotchSub.dmg" data-i18n="hero.download">Download for Mac</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="foot.made">NotchSub is open source under the MIT license. Built with WhisperKit and Apple Translation.</span>
+    <span><a href="https://github.com/wutlu/notchsub">GitHub</a> · <a href="https://github.com/wutlu/notchsub/releases" data-i18n="foot.releases">Releases</a> · <a href="https://github.com/wutlu/notchsub/issues" data-i18n="foot.issues">Report an issue</a></span>
+  </div>
+</footer>
+
+<script>
+  const i18n = {
+    tr: {
+      "nav.features": "Özellikler", "nav.install": "Kurulum",
+      "hero.t1": "Canlı altyazı,", "hero.t2": "doğrudan çentikten.",
+      "hero.lead": "NotchSub, Mac'inizde çalan her sesi (video, görüşme, podcast, yayın) canlı altyazıya ve çeviriye dönüştürür. Ücretsiz, açık kaynak ve tamamen cihaz üstünde çalışır.",
+      "hero.download": "Mac için İndir", "hero.source": "Kaynak kodu",
+      "hero.meta": "Ücretsiz · macOS 15 Sequoia veya üstü · Apple Silicon (M1 ve sonrası)",
+      "mock.live": "Canlı",
+      "feat.title": "Duyduğunuz her şeyi anlayın.",
+      "feat.sub": "Çentiğe tıklayın. NotchSub mikrofonu değil, Mac'inizin sesini dinlemeye başlar.",
+      "feat.private.t": "Gizlilik öncelikli", "feat.private.d": "Konuşma tanıma ve çeviri tamamen Mac'inizde çalışır. Hesap ve bulut gerekmez, ses bilgisayarınızdan asla çıkmaz.",
+      "feat.lang.t": "99 konuşma dili", "feat.lang.d": "OpenAI Whisper ile çalışır. Apple'ın cihaz üstü çevirisiyle 20 dile çevirir, konuşulan dili otomatik de algılayabilir.",
+      "feat.fast.t": "Gerçek zamanlı", "feat.fast.d": "Kelimeler söylendikten yaklaşık bir saniye sonra ekranda belirir. Apple Neural Engine ile hızlandırılır.",
+      "feat.oss.t": "Ücretsiz ve açık kaynak", "feat.oss.d": "MIT lisanslı, native Swift. Abonelik, reklam ya da takip yok. Kodu okuyun, çatallayın, geliştirin.",
+      "how.title": "Nasıl çalışır", "how.sub": "Üç adım, kurulumu yaklaşık bir dakika.",
+      "how.1.t": "Çentiğe tıklayın", "how.1.d": "Ekranın üstünden bir panel açılır ve sistem sesini dinlemeye başlar.",
+      "how.2.t": "Bir şey oynatın", "how.2.d": "YouTube videosu, Zoom görüşmesi, ders ya da podcast. Mac'iniz çalıyorsa NotchSub altyazısını çıkarır.",
+      "how.3.t": "Takip edin", "how.3.d": "Çeviri büyük yazıyla, asıl cümle hemen altında görünür. Paneli kapatmak için çentiğe tekrar tıklayın.",
+      "inst.title": "NotchSub'ı kurun", "inst.sub": "İstediğiniz yöntemi seçin. İkisi de aynı uygulamayı kurar.",
+      "inst.term.t": "Tek satırla kurulum", "inst.rec": "Önerilen",
+      "inst.term.d": "Terminal'i açıp bu komutu yapıştırın. En son sürümü Uygulamalar klasörüne indirir ve açar.",
+      "inst.copy": "Kopyala", "inst.copied": "Kopyalandı",
+      "inst.dmg.t": ".dmg dosyasını indirin",
+      "inst.dmg.1": "<b>NotchSub.dmg</b> dosyasını açın ve uygulamayı Uygulamalar klasörüne sürükleyin.",
+      "inst.dmg.2": "İlk açılışta macOS geliştiriciyi doğrulayamadığını söyleyebilir. Sistem Ayarları → Gizlilik ve Güvenlik'i açıp “Yine de Aç”a tıklayın.",
+      "inst.dmg.3": "NotchSub sorduğunda “Sistem Ses Kaydı”na izin verin.",
+      "inst.dmg.btn": ".dmg İndir",
+      "inst.note": "İlk açılışta NotchSub, Whisper konuşma modelini (~630 MB) indirir ve Mac'inizin Neural Engine'i için optimize eder. Bu birkaç dakika sürebilir, sonraki açılışlar birkaç saniye sürer.",
+      "faq.1.q": "Mikrofonumu kullanıyor mu?", "faq.1.a": "Hayır. NotchSub, Core Audio'nun sistem sesi dinleyicisini kullanır ve yalnızca Mac'inizin çaldığı sesi duyar. Kendi sesiniz asla kaydedilmez.",
+      "faq.2.q": "İnternete bir şey gönderiliyor mu?", "faq.2.a": "Yalnızca iki tek seferlik indirme var: Hugging Face'ten konuşma modeli ve Apple'ın dil paketleri. Sonrasında yazıya dökme ve çeviri çevrimdışı yapılır.",
+      "faq.3.q": "Hangi Mac'ler destekleniyor?", "faq.3.a": "macOS 15 Sequoia veya üstünü çalıştıran tüm Apple Silicon Mac'ler (M1 ve sonrası). Çentiksiz Mac'lerde ve harici ekranlarda ekranın üstünde küçük bir sanal çentik çıkar.",
+      "faq.4.q": "macOS neden tanımlanmamış geliştirici uyarısı veriyor?", "faq.4.a": "NotchSub ücretsiz bir topluluk projesi ve henüz ücretli Apple Developer ID ile onaylanmadı. Tek satırlık kurulum bu uyarıyı atlar. Ya da uygulamaya Sistem Ayarları → Gizlilik ve Güvenlik'ten bir kez izin verebilirsiniz.",
+      "faq.5.q": "Hangi dillere çevirebiliyor?", "faq.5.a": "Konuşma 99 dilde tanınabiliyor. Çeviri, yaklaşık 20 büyük dili kapsayan Apple'ın cihaz üstü motoruyla yapılıyor. Uygulamanın kendi arayüzü Mac'inizin sistem dilini izler.",
+      "final.title": "Artık hiçbir kelimeyi kaçırmayın.",
+      "foot.made": "NotchSub, MIT lisansıyla açık kaynaktır. WhisperKit ve Apple Translation ile geliştirildi.",
+      "foot.releases": "Sürümler", "foot.issues": "Sorun bildir"
+    }
+  };
+  const english = {};
+  document.querySelectorAll("[data-i18n]").forEach(el => { english[el.dataset.i18n] ??= el.innerHTML; });
+  english["inst.copied"] = "Copied";
+
+  let lang = "en";
+  try { lang = localStorage.getItem("lang") || (navigator.language || "en").slice(0, 2); } catch (e) {}
+  if (!i18n[lang]) lang = "en";
+
+  const toggle = document.getElementById("langToggle");
+  function t(key) { return (i18n[lang] && i18n[lang][key]) || english[key] || key; }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+    toggle.textContent = lang === "en" ? "TR" : "EN";
+  }
+  toggle.addEventListener("click", () => {
+    lang = lang === "en" ? "tr" : "en";
+    try { localStorage.setItem("lang", lang); } catch (e) {}
+    applyLang();
+  });
+  applyLang();
+
+  // Kopyala
+  document.getElementById("copyBtn").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    try { await navigator.clipboard.writeText(document.getElementById("cmd").textContent); } catch (err) {}
+    btn.textContent = t("inst.copied");
+    setTimeout(() => { btn.textContent = t("inst.copy"); }, 1500);
+  });
+
+  // Saat
+  const clock = document.getElementById("clock");
+  const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+  tick(); setInterval(tick, 30000);
+
+  // Canlı altyazı demosu
+  const demo = [
+    { pair: "EN → TR", orig: "Today I want to show you something new.", trans: "Bugün size yeni bir şey göstermek istiyorum." },
+    { pair: "EN → TR", orig: "It translates your Mac's audio in real time.", trans: "Mac'inizin sesini gerçek zamanlı olarak çevirir." },
+    { pair: "ES → EN", orig: "Gracias a todos por venir esta noche.", trans: "Thank you all for coming tonight." },
+    { pair: "JA → EN", orig: "この機能は完全にオフラインで動きます。", trans: "This feature works completely offline." },
+    { pair: "DE → FR", orig: "Das Meeting beginnt in fünf Minuten.", trans: "La réunion commence dans cinq minutes." },
+    { pair: "FR → ES", orig: "Le film commence maintenant.", trans: "La película empieza ahora." },
+    { pair: "KO → EN", orig: "오늘 날씨가 정말 좋네요.", trans: "The weather is really nice today." },
+  ];
+  const el = id => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let index = 0;
+  let previous = null;
+
+  function typeInto(node, text, done) {
+    if (reduceMotion) { node.textContent = text; done && done(); return; }
+    const words = text.split(" ");
+    let i = 0;
+    node.textContent = "";
+    const step = () => {
+      i++;
+      node.textContent = words.slice(0, i).join(" ");
+      if (i < words.length) setTimeout(step, 170); else done && done();
+    };
+    step();
+  }
+
+  function show() {
+    const line = demo[index % demo.length];
+    el("pair").textContent = line.pair;
+    if (previous) { el("oldTrans").textContent = previous.trans; el("oldOrig").textContent = previous.orig; }
+    el("trans").textContent = "…";
+    el("trans").classList.add("fade");
+    typeInto(el("orig"), line.orig, () => {
+      el("trans").textContent = line.trans;
+      el("trans").classList.remove("fade");
+      previous = line;
+      index++;
+      setTimeout(show, 2600);
+    });
+  }
+  show();
+</script>
+</body>
+</html>

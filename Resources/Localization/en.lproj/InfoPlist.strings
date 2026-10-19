@@ -1,0 +1,2 @@
+"NSAudioCaptureUsageDescription" = "NotchSub listens to the audio your Mac plays to turn it into live subtitles and translations. The microphone is never used.";
+"CFBundleDisplayName" = "NotchSub";
